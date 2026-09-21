@@ -1,10 +1,10 @@
 {
 "empty": {
 "CityExpert · стан до 600€": 0,
-"Halo Oglasi · кућа до 600€": 1,
-"Halo Oglasi · стан до 600€": 1,
+"Halo Oglasi · кућа до 600€": 2,
+"Halo Oglasi · стан до 600€": 2,
 "KupujemProdajem · стан до 600€": 0,
-"Nekretnine.rs · до 600€": 1
+"Nekretnine.rs · до 600€": 2
 },
 "searches": [
 "CityExpert · стан до 600€",
@@ -51,6 +51,7 @@
 "kupujemprodajem:194412715": "2026-09-21T20:07:45",
 "kupujemprodajem:194413585": "2026-09-21T20:07:45",
 "kupujemprodajem:194826348": "2026-09-21T20:07:45",
+"kupujemprodajem:195010038": "2026-09-21T20:18:41",
 "kupujemprodajem:195044381": "2026-09-21T20:07:45",
 "kupujemprodajem:195417742": "2026-09-21T20:07:45",
 "kupujemprodajem:195547449": "2026-09-21T20:07:45",
@@ -70,6 +71,8 @@
 "kupujemprodajem:195657794": "2026-09-21T20:07:45",
 "kupujemprodajem:195658195": "2026-09-21T20:07:45",
 "kupujemprodajem:195658598": "2026-09-21T20:07:45",
-"kupujemprodajem:195658995": "2026-09-21T20:07:45"
+"kupujemprodajem:195658995": "2026-09-21T20:07:45",
+"kupujemprodajem:195660345": "2026-09-21T20:18:41",
+"kupujemprodajem:195660442": "2026-09-21T20:18:41"
 }
 }
