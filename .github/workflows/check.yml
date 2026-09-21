@@ -1,0 +1,63 @@
+name: Проверка объявлений
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"     # каждые 5 минут (GitHub может запускать с опозданием)
+  workflow_dispatch:           # кнопка «Run workflow» для ручного запуска
+    inputs:
+      debug:
+        description: "Режим проверки (ничего не отправлять, показать найденное)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write              # чтобы сохранять память бота (seen.json)
+
+concurrency:
+  group: kvartira-bot
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Установка библиотек
+        run: pip install -r requirements.txt
+
+      - name: Кэш браузера
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('requirements.txt') }}
+
+      - name: Установка браузера
+        run: python -m playwright install --with-deps chromium
+
+      - name: Проверка сайтов
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          if [ "${{ inputs.debug }}" = "true" ]; then
+            python bot.py --debug
+          else
+            python bot.py --once
+          fi
+
+      - name: Сохранить память бота
+        if: ${{ inputs.debug != true }}
+        run: |
+          git config user.name "kvartira-bot"
+          git config user.email "kvartira-bot@users.noreply.github.com"
+          git add seen.json || true
+          git diff --cached --quiet || git commit -m "seen: $(date -u +%H:%M)"
+          git pull --rebase -q || true
+          git push || true
