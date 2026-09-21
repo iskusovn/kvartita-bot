@@ -138,6 +138,7 @@ def extract_listings(page_html: str, base_url: str, site: str):
         title = max(titles, key=len) if any(titles) else ""
         if not title:
             title = text[:90]
+        title = PRICE_RE.sub("", title, count=1).strip(" ·-|,") or title
 
         image = None
         for img in card.find_all("img"):
@@ -189,11 +190,12 @@ def send_listing(item: dict, search_name: str):
     e = html.escape
     price = f"{item['price']} €" if item["price"] else "цена ?"
     snippet = item["text"]
-    if item["title"] and snippet.startswith(item["title"]):
-        snippet = snippet[len(item["title"]):].strip()
+    if item["title"] and item["title"] in snippet:
+        snippet = snippet.replace(item["title"], "", 1)
+    snippet = PRICE_RE.sub("", snippet, count=1).strip(" ·-|,")
     snippet = snippet[:350] + ("…" if len(snippet) > 350 else "")
     caption = (f"<b>{e(price)}</b> · {e(item['title'][:150])}\n\n"
-               f"{e(snippet)}\n\n"
+               + (f"{e(snippet)}\n\n" if snippet else "") +
                f"<a href=\"{e(item['link'])}\">Открыть объявление</a>\n"
                f"<i>{e(search_name)}</i>")
     if item["image"]:
@@ -210,6 +212,7 @@ def send_listing(item: dict, search_name: str):
 class Fetcher:
     def __init__(self):
         self._pw = self._browser = self._ctx = None
+        self.last_title = ""
         self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": UA,
@@ -222,24 +225,54 @@ class Fetcher:
         r.raise_for_status()
         return r.text
 
-    def browser(self, url: str) -> str:
+    def _start(self):
+        from playwright.sync_api import sync_playwright
+        self._pw = sync_playwright().start()
+        self._browser = self._pw.chromium.launch(
+            headless=True,
+            args=["--disable-blink-features=AutomationControlled"])
+        self._ctx = self._browser.new_context(
+            user_agent=UA, locale="sr-RS", timezone_id="Europe/Belgrade",
+            viewport={"width": 1366, "height": 900},
+            extra_http_headers={"Accept-Language": "sr-RS,sr;q=0.9,en;q=0.8"})
+        # прячем признаки автоматизации, по которым сайты отличают бота
+        self._ctx.add_init_script("""
+            Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+            Object.defineProperty(navigator, 'languages', {get: () => ['sr-RS','sr','en']});
+            Object.defineProperty(navigator, 'plugins', {get: () => [1,2,3,4,5]});
+            window.chrome = window.chrome || {runtime: {}};
+        """)
+
+    def _open(self, page, url):
+        page.goto(url, wait_until="domcontentloaded", timeout=60000)
+        try:
+            page.wait_for_load_state("networkidle", timeout=15000)
+        except Exception:
+            pass
+
+    def browser(self, url: str, site: str = None) -> str:
         if self._ctx is None:
-            from playwright.sync_api import sync_playwright
-            self._pw = sync_playwright().start()
-            self._browser = self._pw.chromium.launch(headless=True)
-            self._ctx = self._browser.new_context(
-                user_agent=UA, locale="sr-RS",
-                viewport={"width": 1366, "height": 900})
+            self._start()
         page = self._ctx.new_page()
         try:
-            page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            try:
-                page.wait_for_load_state("networkidle", timeout=15000)
-            except Exception:
-                pass
+            self._open(page, url)
+            # если попали на страницу проверки защиты — ждём до 25 секунд,
+            # пока она сама не пропустит на выдачу
+            for _ in range(5):
+                if not site or extract_listings(page.content(), url, site):
+                    break
+                page.wait_for_timeout(5000)
+            else:
+                # последняя попытка: зайти на главную, получить cookies и вернуться
+                home = f"{urlparse(url).scheme}://{urlparse(url).netloc}/"
+                self._open(page, home)
+                page.wait_for_timeout(6000)
+                self._open(page, url)
+                page.wait_for_timeout(4000)
             for _ in range(3):
                 page.mouse.wheel(0, 2500)
                 page.wait_for_timeout(700)
+            self.last_title = page.title()
             return page.content()
         finally:
             page.close()
@@ -265,8 +298,12 @@ def fetch_listings(fetcher, url, site):
     except Exception as e:
         log.info("%s: быстрый запрос не удался (%s), пробую браузер", site, e)
     try:
-        page_html = fetcher.browser(url)
-        return extract_listings(page_html, url, site), page_html, "браузер"
+        page_html = fetcher.browser(url, site)
+        items = extract_listings(page_html, url, site)
+        if not items:
+            log.info("%s: браузер открыл страницу «%s», объявлений на ней нет",
+                     site, fetcher.last_title[:80])
+        return items, page_html, "браузер"
     except Exception as e:
         log.warning("%s: браузер тоже не смог: %s", site, e)
         return [], page_html, "ошибка"
