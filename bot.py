@@ -3,21 +3,23 @@
 Бот, который следит за поисковыми выдачами на halooglasi.com, cityexpert.rs,
 nekretnine.rs и kupujemprodajem.com и присылает в Telegram только новые объявления.
 
-Запуск:
-  python bot.py --chat-id   узнать свой chat id (сначала напишите боту)
-  python bot.py --test      отправить тестовое сообщение
-  python bot.py --debug     один проход: показать, что найдено, ничего не отправлять
-  python bot.py             основной режим (работает, пока открыт Терминал)
+Работает в двух режимах:
+  в облаке (GitHub Actions):  python bot.py --once   — один проход, запускается по расписанию
+  на своём компьютере:        python bot.py          — крутится в цикле
+
+Дополнительно:
+  python bot.py --debug   один проход: показать, что найдено, ничего не отправлять
+  python bot.py --test    отправить тестовое сообщение
 """
 import argparse
 import html
+import json
 import logging
 import random
 import re
-import sqlite3
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from urllib.parse import urljoin, urlparse
 
@@ -27,7 +29,7 @@ from bs4 import BeautifulSoup
 import config
 
 BASE_DIR = Path(__file__).resolve().parent
-DB_PATH = BASE_DIR / "seen.sqlite3"
+STATE_PATH = BASE_DIR / "seen.json"
 DEBUG_DIR = BASE_DIR / "debug"
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
@@ -156,41 +158,6 @@ def extract_listings(page_html: str, base_url: str, site: str):
 
 
 # ------------------------------------------------------------------
-#  Загрузка страниц через настоящий браузер (Chromium через Playwright)
-# ------------------------------------------------------------------
-class Browser:
-    def __init__(self):
-        from playwright.sync_api import sync_playwright
-        self._pw = sync_playwright().start()
-        self._browser = self._pw.chromium.launch(headless=True)
-        self._ctx = self._browser.new_context(
-            user_agent=UA, locale="sr-RS",
-            viewport={"width": 1366, "height": 900})
-
-    def get(self, url: str) -> str:
-        page = self._ctx.new_page()
-        try:
-            page.goto(url, wait_until="domcontentloaded", timeout=60000)
-            try:
-                page.wait_for_load_state("networkidle", timeout=15000)
-            except Exception:
-                pass
-            for _ in range(3):                       # подгрузить ленивые карточки
-                page.mouse.wheel(0, 2500)
-                page.wait_for_timeout(700)
-            return page.content()
-        finally:
-            page.close()
-
-    def close(self):
-        try:
-            self._browser.close()
-            self._pw.stop()
-        except Exception:
-            pass
-
-
-# ------------------------------------------------------------------
 #  Telegram
 # ------------------------------------------------------------------
 def tg(method: str, **data):
@@ -238,131 +205,185 @@ def send_listing(item: dict, search_name: str):
 
 
 # ------------------------------------------------------------------
-#  База «уже видели»
+#  Загрузка страниц: сначала быстрым запросом, если не вышло — через браузер
 # ------------------------------------------------------------------
-def db_open():
-    db = sqlite3.connect(DB_PATH)
-    db.execute("CREATE TABLE IF NOT EXISTS seen (site TEXT, lid TEXT, "
-               "first_seen TEXT, PRIMARY KEY (site, lid))")
-    db.execute("CREATE TABLE IF NOT EXISTS searches (name TEXT PRIMARY KEY)")
-    return db
+class Fetcher:
+    def __init__(self):
+        self._pw = self._browser = self._ctx = None
+        self.session = requests.Session()
+        self.session.headers.update({
+            "User-Agent": UA,
+            "Accept-Language": "sr-RS,sr;q=0.9,en;q=0.8",
+            "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
+        })
+
+    def plain(self, url: str) -> str:
+        r = self.session.get(url, timeout=30)
+        r.raise_for_status()
+        return r.text
+
+    def browser(self, url: str) -> str:
+        if self._ctx is None:
+            from playwright.sync_api import sync_playwright
+            self._pw = sync_playwright().start()
+            self._browser = self._pw.chromium.launch(headless=True)
+            self._ctx = self._browser.new_context(
+                user_agent=UA, locale="sr-RS",
+                viewport={"width": 1366, "height": 900})
+        page = self._ctx.new_page()
+        try:
+            page.goto(url, wait_until="domcontentloaded", timeout=60000)
+            try:
+                page.wait_for_load_state("networkidle", timeout=15000)
+            except Exception:
+                pass
+            for _ in range(3):
+                page.mouse.wheel(0, 2500)
+                page.wait_for_timeout(700)
+            return page.content()
+        finally:
+            page.close()
+
+    def close(self):
+        try:
+            if self._browser:
+                self._browser.close()
+            if self._pw:
+                self._pw.stop()
+        except Exception:
+            pass
 
 
-def is_seen(db, site, lid):
-    return db.execute("SELECT 1 FROM seen WHERE site=? AND lid=?",
-                      (site, lid)).fetchone() is not None
-
-
-def mark_seen(db, site, lid):
-    db.execute("INSERT OR IGNORE INTO seen VALUES (?,?,?)",
-               (site, lid, datetime.now().isoformat(timespec="seconds")))
+def fetch_listings(fetcher, url, site):
+    """Возвращает (объявления, html, способ)."""
+    page_html = ""
+    try:
+        page_html = fetcher.plain(url)
+        items = extract_listings(page_html, url, site)
+        if items:
+            return items, page_html, "запрос"
+    except Exception as e:
+        log.info("%s: быстрый запрос не удался (%s), пробую браузер", site, e)
+    try:
+        page_html = fetcher.browser(url)
+        return extract_listings(page_html, url, site), page_html, "браузер"
+    except Exception as e:
+        log.warning("%s: браузер тоже не смог: %s", site, e)
+        return [], page_html, "ошибка"
 
 
 # ------------------------------------------------------------------
-#  Основной цикл
+#  Память бота: файл seen.json
 # ------------------------------------------------------------------
-empty_streak = {}
+def load_state():
+    if STATE_PATH.exists():
+        try:
+            return json.loads(STATE_PATH.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {"seen": {}, "searches": [], "empty": {}}
 
 
-def check_search(browser, db, s, debug=False):
+def save_state(state):
+    # забываем объявления старше 90 дней, чтобы файл не рос бесконечно
+    cutoff = (datetime.now() - timedelta(days=90)).isoformat()
+    state["seen"] = {k: v for k, v in state["seen"].items() if v >= cutoff}
+    STATE_PATH.write_text(json.dumps(state, ensure_ascii=False, indent=0,
+                                     sort_keys=True), encoding="utf-8")
+
+
+# ------------------------------------------------------------------
+#  Проверка одного поиска
+# ------------------------------------------------------------------
+def check_search(fetcher, state, s, debug=False):
     name, site, url = s["name"], s["site"], s["url"]
-    page_html = browser.get(url)
-    items = extract_listings(page_html, url, site)
+    items, page_html, how = fetch_listings(fetcher, url, site)
 
     if debug:
         DEBUG_DIR.mkdir(exist_ok=True)
-        (DEBUG_DIR / f"{site}.html").write_text(page_html, encoding="utf-8")
-        print(f"\n=== {name}: найдено {len(items)} объявлений")
+        (DEBUG_DIR / f"{site}.html").write_text(page_html or "", encoding="utf-8")
+        print(f"\n=== {name}: найдено {len(items)} объявлений (способ: {how})")
         for it in items[:8]:
             print(f"  {it['price'] or '?':>6} €  {it['title'][:70]}\n          {it['link']}")
         return
 
+    now = datetime.now().isoformat(timespec="seconds")
     if not items:
-        empty_streak[name] = empty_streak.get(name, 0) + 1
-        log.info("%s: 0 объявлений (подряд: %d)", name, empty_streak[name])
-        if empty_streak[name] == 3:
+        n = state["empty"].get(name, 0) + 1
+        state["empty"][name] = n
+        log.info("%s: 0 объявлений (подряд: %d)", name, n)
+        if n == 3:
             send_text(f"⚠️ <b>{html.escape(name)}</b>: три проверки подряд без "
                       f"объявлений. Возможно, сайт блокирует бота или поменял "
-                      f"вёрстку. Запустите <code>python bot.py --debug</code>.")
+                      f"вёрстку. Запустите проверку в режиме debug.")
         return
-    empty_streak[name] = 0
+    state["empty"][name] = 0
 
-    first_time = db.execute("SELECT 1 FROM searches WHERE name=?",
-                            (name,)).fetchone() is None
-    if first_time:
+    if name not in state["searches"]:
         for it in items:
-            mark_seen(db, site, it["id"])
-        db.execute("INSERT INTO searches VALUES (?)", (name,))
-        db.commit()
+            state["seen"][f"{site}:{it['id']}"] = now
+        state["searches"].append(name)
         send_text(f"✅ Слежу за <b>{html.escape(name)}</b>. Сейчас в выдаче "
                   f"{len(items)} объявлений — буду присылать только новые.")
         log.info("%s: первый запуск, запомнил %d объявлений", name, len(items))
         return
 
-    new = [it for it in items if not is_seen(db, site, it["id"])]
+    new = [it for it in items if f"{site}:{it['id']}" not in state["seen"]]
     sent = 0
-    for it in reversed(new):                         # старые из новых — первыми
-        mark_seen(db, site, it["id"])
-        db.commit()
+    for it in reversed(new):
+        state["seen"][f"{site}:{it['id']}"] = now
         if config.MAX_PRICE_EUR and it["price"] and it["price"] > config.MAX_PRICE_EUR:
             continue
         if sent >= 15:
-            continue                                  # защита от лавины
+            continue
         send_listing(it, name)
         sent += 1
         time.sleep(1.2)
-    log.info("%s: %d в выдаче, новых %d, отправлено %d",
-             name, len(items), len(new), sent)
+    log.info("%s: %d в выдаче (%s), новых %d, отправлено %d",
+             name, len(items), how, len(new), sent)
 
 
-def run(debug=False, once=False):
-    db = db_open()
-    browser = Browser()
+def run_pass(fetcher, state, debug=False):
+    for s in config.SEARCHES:
+        try:
+            check_search(fetcher, state, s, debug=debug)
+        except Exception as e:
+            log.warning("%s: ошибка: %s", s["name"], e)
+        if not debug:
+            save_state(state)
+        time.sleep(random.uniform(2, 5))
+
+
+def main():
+    p = argparse.ArgumentParser()
+    p.add_argument("--once", action="store_true")
+    p.add_argument("--debug", action="store_true")
+    p.add_argument("--test", action="store_true")
+    a = p.parse_args()
+
+    if not config.TELEGRAM_TOKEN or "ВСТАВЬТЕ" in config.TELEGRAM_TOKEN:
+        sys.exit("Нет TELEGRAM_TOKEN (секрет в GitHub или строка в config.py)")
+    if not a.debug and (not config.TELEGRAM_CHAT_ID or "ВСТАВЬТЕ" in str(config.TELEGRAM_CHAT_ID)):
+        sys.exit("Нет TELEGRAM_CHAT_ID (секрет в GitHub или строка в config.py)")
+
+    if a.test:
+        send_text("🏠 Бот на связи. Как только появятся новые объявления — пришлю.")
+        print("Отправлено. Проверьте Telegram.")
+        return
+
+    state = load_state()
+    fetcher = Fetcher()
     try:
+        if a.debug or a.once:
+            run_pass(fetcher, state, debug=a.debug)
+            return
         while True:
-            for s in config.SEARCHES:
-                try:
-                    check_search(browser, db, s, debug=debug)
-                except Exception as e:
-                    log.warning("%s: ошибка: %s", s["name"], e)
-                time.sleep(random.uniform(3, 8))
-            if debug or once:
-                break
+            run_pass(fetcher, state)
             wait = config.CHECK_EVERY_SECONDS + random.uniform(-30, 30)
             time.sleep(max(60, wait))
     finally:
-        browser.close()
-
-
-def show_chat_id():
-    j = tg("getUpdates")
-    chats = {}
-    for u in j.get("result", []):
-        msg = u.get("message") or u.get("channel_post") or {}
-        c = msg.get("chat")
-        if c:
-            chats[c["id"]] = c.get("username") or c.get("title") or c.get("first_name")
-    if not chats:
-        print("Не вижу сообщений. Напишите боту что-нибудь в Telegram и повторите.")
-    for cid, nm in chats.items():
-        print(f"chat id: {cid}   ({nm})")
+        fetcher.close()
 
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument("--chat-id", action="store_true")
-    p.add_argument("--test", action="store_true")
-    p.add_argument("--debug", action="store_true")
-    p.add_argument("--once", action="store_true")
-    a = p.parse_args()
-    if "ВСТАВЬТЕ" in config.TELEGRAM_TOKEN:
-        sys.exit("Сначала впишите TELEGRAM_TOKEN в config.py")
-    if a.chat_id:
-        show_chat_id()
-    elif a.test:
-        send_text("🏠 Бот на связи. Как только появятся новые объявления — пришлю.")
-        print("Отправлено. Проверьте Telegram.")
-    else:
-        if not a.debug and "ВСТАВЬТЕ" in str(config.TELEGRAM_CHAT_ID):
-            sys.exit("Сначала впишите TELEGRAM_CHAT_ID в config.py (python bot.py --chat-id)")
-        run(debug=a.debug, once=a.once)
+    main()
