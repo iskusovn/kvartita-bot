@@ -1,10 +1,10 @@
 {
 "empty": {
 "CityExpert · стан до 600€": 0,
-"Halo Oglasi · кућа до 600€": 59,
-"Halo Oglasi · стан до 600€": 59,
+"Halo Oglasi · кућа до 600€": 60,
+"Halo Oglasi · стан до 600€": 60,
 "KupujemProdajem · стан до 600€": 0,
-"Nekretnine.rs · до 600€": 59
+"Nekretnine.rs · до 600€": 60
 },
 "searches": [
 "CityExpert · стан до 600€",
@@ -17,6 +17,7 @@
 "cityexpert:17276": "2026-09-21T20:07:25",
 "cityexpert:21160": "2026-09-21T20:07:25",
 "cityexpert:21466": "2026-09-28T16:01:47",
+"cityexpert:23437": "2026-10-01T21:14:46",
 "cityexpert:26166": "2026-09-21T20:07:25",
 "cityexpert:31124": "2026-09-28T16:01:47",
 "cityexpert:32250": "2026-09-21T20:07:25",
@@ -116,6 +117,7 @@
 "kupujemprodajem:189636663": "2026-09-21T20:07:45",
 "kupujemprodajem:190096585": "2026-09-27T17:42:17",
 "kupujemprodajem:190168483": "2026-09-22T16:55:11",
+"kupujemprodajem:190416493": "2026-10-01T21:15:39",
 "kupujemprodajem:190646044": "2026-09-26T00:55:15",
 "kupujemprodajem:190671664": "2026-09-24T00:35:34",
 "kupujemprodajem:190764991": "2026-09-27T17:42:17",
@@ -152,6 +154,8 @@
 "kupujemprodajem:192630992": "2026-09-30T15:06:58",
 "kupujemprodajem:192631041": "2026-09-30T15:06:58",
 "kupujemprodajem:192661374": "2026-10-01T16:30:54",
+"kupujemprodajem:192713165": "2026-10-01T21:15:39",
+"kupujemprodajem:192724075": "2026-10-01T21:15:39",
 "kupujemprodajem:192745559": "2026-09-25T19:26:58",
 "kupujemprodajem:192747399": "2026-09-30T23:36:28",
 "kupujemprodajem:192819642": "2026-09-21T20:07:45",
@@ -172,6 +176,7 @@
 "kupujemprodajem:193356605": "2026-09-30T19:59:34",
 "kupujemprodajem:193360808": "2026-09-30T19:59:34",
 "kupujemprodajem:193362369": "2026-09-30T23:36:28",
+"kupujemprodajem:193396204": "2026-10-01T21:15:39",
 "kupujemprodajem:193452177": "2026-09-24T10:15:43",
 "kupujemprodajem:193546256": "2026-09-23T10:32:49",
 "kupujemprodajem:193575777": "2026-09-24T15:12:38",
@@ -199,6 +204,7 @@
 "kupujemprodajem:194588966": "2026-09-24T10:15:43",
 "kupujemprodajem:194623830": "2026-09-27T07:10:17",
 "kupujemprodajem:194651864": "2026-10-01T16:30:54",
+"kupujemprodajem:194655117": "2026-10-01T21:15:39",
 "kupujemprodajem:194690351": "2026-09-24T10:15:43",
 "kupujemprodajem:194701869": "2026-09-23T15:13:28",
 "kupujemprodajem:194722344": "2026-09-24T10:15:43",
@@ -208,6 +214,7 @@
 "kupujemprodajem:194852810": "2026-09-23T10:32:49",
 "kupujemprodajem:194853705": "2026-09-23T10:32:49",
 "kupujemprodajem:194858910": "2026-09-23T15:13:28",
+"kupujemprodajem:194866644": "2026-10-01T21:15:39",
 "kupujemprodajem:194877371": "2026-09-24T15:12:38",
 "kupujemprodajem:194888241": "2026-09-24T22:26:25",
 "kupujemprodajem:194890043": "2026-09-25T05:27:13",
@@ -289,6 +296,7 @@
 "kupujemprodajem:195433069": "2026-09-30T19:59:34",
 "kupujemprodajem:195450415": "2026-10-01T09:13:19",
 "kupujemprodajem:195464221": "2026-10-01T16:30:54",
+"kupujemprodajem:195469194": "2026-10-01T21:15:39",
 "kupujemprodajem:195547449": "2026-09-21T20:07:45",
 "kupujemprodajem:195560920": "2026-09-24T10:15:43",
 "kupujemprodajem:195563552": "2026-09-23T10:32:49",
@@ -591,6 +599,7 @@
 "kupujemprodajem:195884941": "2026-09-29T14:02:29",
 "kupujemprodajem:195885688": "2026-09-29T14:02:29",
 "kupujemprodajem:195885706": "2026-09-29T14:02:29",
+"kupujemprodajem:195888355": "2026-10-01T21:15:39",
 "kupujemprodajem:195888920": "2026-09-29T19:20:08",
 "kupujemprodajem:195889756": "2026-09-29T19:20:08",
 "kupujemprodajem:195889869": "2026-09-29T19:20:08",
@@ -670,6 +679,14 @@
 "kupujemprodajem:195954946": "2026-10-01T16:30:54",
 "kupujemprodajem:195956053": "2026-10-01T16:30:54",
 "kupujemprodajem:195956063": "2026-10-01T16:30:54",
-"kupujemprodajem:195956468": "2026-10-01T16:30:54"
+"kupujemprodajem:195956468": "2026-10-01T16:30:54",
+"kupujemprodajem:195957367": "2026-10-01T21:15:39",
+"kupujemprodajem:195957559": "2026-10-01T21:15:39",
+"kupujemprodajem:195957718": "2026-10-01T21:15:39",
+"kupujemprodajem:195960140": "2026-10-01T21:15:39",
+"kupujemprodajem:195960384": "2026-10-01T21:15:39",
+"kupujemprodajem:195960435": "2026-10-01T21:15:39",
+"kupujemprodajem:195960492": "2026-10-01T21:15:39",
+"kupujemprodajem:195962725": "2026-10-01T21:15:39"
 }
 }
