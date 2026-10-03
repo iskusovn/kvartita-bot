@@ -1,10 +1,10 @@
 {
 "empty": {
 "CityExpert · стан до 600€": 0,
-"Halo Oglasi · кућа до 600€": 70,
-"Halo Oglasi · стан до 600€": 70,
+"Halo Oglasi · кућа до 600€": 71,
+"Halo Oglasi · стан до 600€": 71,
 "KupujemProdajem · стан до 600€": 0,
-"Nekretnine.rs · до 600€": 70
+"Nekretnine.rs · до 600€": 71
 },
 "searches": [
 "CityExpert · стан до 600€",
@@ -169,6 +169,7 @@
 "kupujemprodajem:192631041": "2026-09-30T15:06:58",
 "kupujemprodajem:192661374": "2026-10-01T16:30:54",
 "kupujemprodajem:192713165": "2026-10-01T21:15:39",
+"kupujemprodajem:192718474": "2026-10-03T22:11:53",
 "kupujemprodajem:192724075": "2026-10-01T21:15:39",
 "kupujemprodajem:192742038": "2026-10-02T18:12:36",
 "kupujemprodajem:192745559": "2026-09-25T19:26:58",
@@ -207,6 +208,7 @@
 "kupujemprodajem:194161525": "2026-09-29T14:02:29",
 "kupujemprodajem:194220933": "2026-09-22T16:55:11",
 "kupujemprodajem:194282646": "2026-10-03T16:11:41",
+"kupujemprodajem:194292773": "2026-10-03T22:11:53",
 "kupujemprodajem:194409486": "2026-09-21T20:07:45",
 "kupujemprodajem:194411283": "2026-09-21T20:07:45",
 "kupujemprodajem:194412715": "2026-09-21T20:07:45",
@@ -785,6 +787,7 @@
 "kupujemprodajem:196013556": "2026-10-03T19:15:29",
 "kupujemprodajem:196013602": "2026-10-03T19:15:29",
 "kupujemprodajem:196013620": "2026-10-03T19:15:29",
-"kupujemprodajem:196013626": "2026-10-03T19:15:29"
+"kupujemprodajem:196013626": "2026-10-03T19:15:29",
+"kupujemprodajem:196015255": "2026-10-03T22:11:53"
 }
 }
