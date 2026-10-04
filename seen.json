@@ -1,10 +1,10 @@
 {
 "empty": {
 "CityExpert · стан до 600€": 0,
-"Halo Oglasi · кућа до 600€": 73,
-"Halo Oglasi · стан до 600€": 73,
+"Halo Oglasi · кућа до 600€": 74,
+"Halo Oglasi · стан до 600€": 74,
 "KupujemProdajem · стан до 600€": 0,
-"Nekretnine.rs · до 600€": 73
+"Nekretnine.rs · до 600€": 74
 },
 "searches": [
 "CityExpert · стан до 600€",
@@ -103,6 +103,7 @@
 "kupujemprodajem:165641527": "2026-09-29T07:04:32",
 "kupujemprodajem:184636015": "2026-09-24T19:12:35",
 "kupujemprodajem:188024491": "2026-10-02T22:16:25",
+"kupujemprodajem:188383119": "2026-10-04T12:36:50",
 "kupujemprodajem:188494837": "2026-09-22T16:55:11",
 "kupujemprodajem:188563850": "2026-09-28T16:02:50",
 "kupujemprodajem:188563870": "2026-10-02T12:56:20",
@@ -172,6 +173,7 @@
 "kupujemprodajem:192718474": "2026-10-03T22:11:53",
 "kupujemprodajem:192722861": "2026-10-04T06:22:14",
 "kupujemprodajem:192724075": "2026-10-01T21:15:39",
+"kupujemprodajem:192725246": "2026-10-04T12:36:50",
 "kupujemprodajem:192742038": "2026-10-02T18:12:36",
 "kupujemprodajem:192745559": "2026-09-25T19:26:58",
 "kupujemprodajem:192747399": "2026-09-30T23:36:28",
@@ -196,6 +198,7 @@
 "kupujemprodajem:193362369": "2026-09-30T23:36:28",
 "kupujemprodajem:193396204": "2026-10-01T21:15:39",
 "kupujemprodajem:193452177": "2026-09-24T10:15:43",
+"kupujemprodajem:193461449": "2026-10-04T12:36:50",
 "kupujemprodajem:193481812": "2026-10-02T18:12:36",
 "kupujemprodajem:193546256": "2026-09-23T10:32:49",
 "kupujemprodajem:193575777": "2026-09-24T15:12:38",
@@ -203,6 +206,7 @@
 "kupujemprodajem:193633410": "2026-09-26T18:02:28",
 "kupujemprodajem:193721596": "2026-09-30T15:06:58",
 "kupujemprodajem:193827853": "2026-10-03T16:11:41",
+"kupujemprodajem:193851799": "2026-10-04T12:36:50",
 "kupujemprodajem:193939023": "2026-09-28T21:52:59",
 "kupujemprodajem:193991191": "2026-09-22T12:08:10",
 "kupujemprodajem:194090814": "2026-09-27T17:42:17",
@@ -259,6 +263,7 @@
 "kupujemprodajem:194971613": "2026-09-28T21:52:59",
 "kupujemprodajem:194994918": "2026-09-29T14:02:29",
 "kupujemprodajem:195010038": "2026-09-21T20:18:41",
+"kupujemprodajem:195021274": "2026-10-04T12:36:50",
 "kupujemprodajem:195030355": "2026-09-30T15:06:58",
 "kupujemprodajem:195032717": "2026-09-30T19:59:34",
 "kupujemprodajem:195034577": "2026-09-28T07:44:20",
@@ -279,6 +284,7 @@
 "kupujemprodajem:195247925": "2026-09-28T07:44:20",
 "kupujemprodajem:195248576": "2026-09-22T20:01:36",
 "kupujemprodajem:195258377": "2026-09-23T10:32:49",
+"kupujemprodajem:195261870": "2026-10-04T12:36:50",
 "kupujemprodajem:195262140": "2026-09-23T15:13:28",
 "kupujemprodajem:195264654": "2026-09-23T15:13:28",
 "kupujemprodajem:195266430": "2026-09-23T19:06:39",
@@ -791,6 +797,10 @@
 "kupujemprodajem:196013620": "2026-10-03T19:15:29",
 "kupujemprodajem:196013626": "2026-10-03T19:15:29",
 "kupujemprodajem:196015255": "2026-10-03T22:11:53",
-"kupujemprodajem:196021438": "2026-10-04T06:22:14"
+"kupujemprodajem:196021438": "2026-10-04T06:22:14",
+"kupujemprodajem:196023801": "2026-10-04T12:36:50",
+"kupujemprodajem:196026267": "2026-10-04T12:36:50",
+"kupujemprodajem:196026755": "2026-10-04T12:36:50",
+"kupujemprodajem:196030222": "2026-10-04T12:36:50"
 }
 }
